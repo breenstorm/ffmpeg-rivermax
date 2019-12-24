@@ -110,7 +110,7 @@ const AVOption ff_rivermax_options[] = {
     { NULL },
 };
 
-static const AVOption sdp_options[] = {
+static const AVOption sdp_options1[] = {
     RIVERMAX_FLAG_OPTS("sdp_flags", "SDP flags"),
     { "custom_io", "use custom I/O", 0, AV_OPT_TYPE_CONST, {.i64 = RIVERMAX_FLAG_CUSTOM_IO}, 0, 0, DEC, "rivermax_flags" },
     { "rtcp_to_source", "send RTCP packets to the source address of received packets", 0, AV_OPT_TYPE_CONST, {.i64 = RIVERMAX_FLAG_RTCP_TO_SOURCE}, 0, 0, DEC, "rivermax_flags" },
@@ -683,7 +683,7 @@ static void sdp_parse_line(AVFormatContext *s, SDPParseState *s1,
     }
 }
 
-int ff_sdp_parse(AVFormatContext *s, const char *content)
+int ff_sdp_parse1(AVFormatContext *s, const char *content)
 {
     const char *p;
     int letter, i;
@@ -750,7 +750,7 @@ void ff_rivermax_undo_setup(AVFormatContext *s, int send_packets)
                 av_write_trailer(rtpctx);
                 if (rt->lower_transport == RIVERMAX_LOWER_TRANSPORT_TCP) {
                     if (CONFIG_RIVERMAX_MUXER && rtpctx->pb && send_packets)
-                        ff_rivermax_tcp_write_packet(s, rivermax_st);
+                        ff_rtsp_tcp_write_packet(s, rivermax_st);
                     ffio_free_dyn_buf(&rtpctx->pb);
                 } else {
                     avio_closep(&rtpctx->pb);
@@ -1897,9 +1897,9 @@ redirect:
     }
 
     if (CONFIG_RIVERMAX_DEMUXER && s->iformat)
-        err = ff_rivermax_setup_input_streams(s, reply);
-    else if (CONFIG_RIVERMAX_MUXER)
-        err = ff_rivermax_setup_output_streams(s, host);
+        err = ff_rtsp_setup_input_streams(s, reply);
+    // else if (CONFIG_RIVERMAX_MUXER)
+    //     err = ff_rivermax_setup_output_streams(s, host);
     else
         av_assert0(0);
     if (err)
@@ -1960,7 +1960,7 @@ static int parse_rivermax_message(AVFormatContext *s)
 
     if (rt->rivermax_flags & RIVERMAX_FLAG_LISTEN) {
         if (rt->state == RIVERMAX_STATE_STREAMING) {
-            if (!ff_rivermax_parse_streaming_commands(s))
+            if (!ff_rtsp_parse_streaming_commands(s))
                 return AVERROR_EOF;
             else
                 av_log(s, AV_LOG_WARNING,
@@ -2111,7 +2111,7 @@ static int read_packet(AVFormatContext *s,
     default:
 #if CONFIG_RIVERMAX_DEMUXER
     case RIVERMAX_LOWER_TRANSPORT_TCP:
-        len = ff_rivermax_tcp_read_packet(s, rivermax_st, rt->recvbuf, RECVBUF_SIZE);
+        len = ff_rtsp_tcp_read_packet(s, rivermax_st, rt->recvbuf, RECVBUF_SIZE);
         break;
 #endif
     case RIVERMAX_LOWER_TRANSPORT_UDP:
@@ -2298,7 +2298,7 @@ end:
 #endif /* CONFIG_RTPDEC */
 
 #if CONFIG_SDP_DEMUXER
-static int sdp_probe(const AVProbeData *p1)
+static int sdp_probe1(const AVProbeData *p1)
 {
     const char *p = p1->buf, *p_end = p1->buf + p1->buf_size;
 
@@ -2328,7 +2328,7 @@ static void append_source_addrs(char *buf, int size, const char *name,
         av_strlcatf(buf, size, ",%s", addrs[i]->addr);
 }
 
-static int sdp_read_header(AVFormatContext *s)
+static int sdp_read_header1(AVFormatContext *s)
 {
     RIVERMAXState *rt = s->priv_data;
     RIVERMAXStream *rivermax_st;
@@ -2356,7 +2356,7 @@ static int sdp_read_header(AVFormatContext *s)
     }
     content[size] ='\0';
 
-    err = ff_sdp_parse(s, content);
+    err = ff_sdp_parse1(s, content);
     av_freep(&content);
     if (err) goto fail;
 
@@ -2410,41 +2410,42 @@ fail:
     return err;
 }
 
-static int sdp_read_close(AVFormatContext *s)
+static int sdp_read_close1(AVFormatContext *s)
 {
     ff_rivermax_close_streams(s);
     ff_network_close();
     return 0;
 }
 
-static const AVClass sdp_demuxer_class = {
-    .class_name     = "SDP demuxer",
+static const AVClass sdp_demuxer_class1 = {
+    .class_name     = "SDP Demuxer Rivermax",
     .item_name      = av_default_item_name,
-    .option         = sdp_options,
+    .option         = sdp_options1,
     .version        = LIBAVUTIL_VERSION_INT,
 };
 
-AVInputFormat ff_sdp_demuxer = {
-    .name           = "sdp",
-    .long_name      = NULL_IF_CONFIG_SMALL("SDP"),
+AVInputFormat ff_sdp_demuxer1 = {
+    .name           = "sdpRivermax",
+    .long_name      = NULL_IF_CONFIG_SMALL("SDPMETKOEK"),
     .priv_data_size = sizeof(RIVERMAXState),
-    .read_probe     = sdp_probe,
-    .read_header    = sdp_read_header,
+    .read_probe     = sdp_probe1,
+    .read_header    = sdp_read_header1,
     .read_packet    = ff_rivermax_fetch_packet,
-    .read_close     = sdp_read_close,
-    .priv_class     = &sdp_demuxer_class,
+    .read_close     = sdp_read_close1,
+    .priv_class     = &sdp_demuxer_class1,
 };
 #endif /* CONFIG_SDP_DEMUXER */
 
-#if CONFIG_RTP_DEMUXER
-static int rtp_probe(const AVProbeData *p)
+// HALLO IK BEN HIER
+#if CONFIG_RIVERMAX_DEMUXER
+static int rtp_probe1(const AVProbeData *p)
 {
-    if (av_strstart(p->filename, "rtp:", NULL))
+    if (av_strstart(p->filename, "Rivermax:", NULL))
         return AVPROBE_SCORE_MAX;
     return 0;
 }
 
-static int rtp_read_header(AVFormatContext *s)
+static int rtp_read_header1(AVFormatContext *s)
 {
     uint8_t recvbuf[RTP_MAX_PACKET_LENGTH];
     char host[500], sdp[500];
@@ -2530,7 +2531,7 @@ static int rtp_read_header(AVFormatContext *s)
 
     rt->media_type_mask = (1 << (AVMEDIA_TYPE_SUBTITLE+1)) - 1;
 
-    ret = sdp_read_header(s);
+    ret = sdp_read_header1(s);
     s->pb = NULL;
     return ret;
 
@@ -2542,22 +2543,22 @@ fail:
     return ret;
 }
 
-static const AVClass rtp_demuxer_class = {
+static const AVClass rivermax_demuxer_class = {
     .class_name     = "RTP demuxer",
     .item_name      = av_default_item_name,
     .option         = rtp_options,
     .version        = LIBAVUTIL_VERSION_INT,
 };
 
-AVInputFormat ff_rtp_demuxer = {
-    .name           = "rtp",
-    .long_name      = NULL_IF_CONFIG_SMALL("RTP input"),
+AVInputFormat ff_rivermax_demuxer = {
+    .name           = "rivermax",
+    .long_name      = NULL_IF_CONFIG_SMALL("rivermax input"),
     .priv_data_size = sizeof(RIVERMAXState),
-    .read_probe     = rtp_probe,
-    .read_header    = rtp_read_header,
+    .read_probe     = rtp_probe1,
+    .read_header    = rtp_read_header1,
     .read_packet    = ff_rivermax_fetch_packet,
-    .read_close     = sdp_read_close,
+    .read_close     = sdp_read_close1,
     .flags          = AVFMT_NOFILE,
-    .priv_class     = &rtp_demuxer_class,
+    .priv_class     = &rivermax_demuxer_class,
 };
 #endif /* CONFIG_RTP_DEMUXER */

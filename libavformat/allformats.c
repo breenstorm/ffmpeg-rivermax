@@ -358,7 +358,7 @@ extern AVOutputFormat ff_rtp_mpegts_muxer;
 extern AVInputFormat  ff_rtsp_demuxer;
 extern AVOutputFormat ff_rtsp_muxer;
 extern AVInputFormat  ff_rivermax_demuxer;
-extern AVOutputFormat ff_rivermax_muxer;
+// extern AVOutputFormat ff_rivermax_muxer;
 extern AVInputFormat  ff_s337m_demuxer;
 extern AVInputFormat  ff_sami_demuxer;
 extern AVInputFormat  ff_sap_demuxer;

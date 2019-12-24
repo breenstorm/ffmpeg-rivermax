@@ -582,7 +582,7 @@ void ff_rivermax_close_connections(AVFormatContext *s);
  * Get the description of the stream and set up the RIVERMAXStream child
  * objects.
  */
-int ff_rivermax_setup_input_streams(AVFormatContext *s, RIVERMAXMessageHeader *reply);
+int ff_rtsp_setup_input_streams(AVFormatContext *s, RIVERMAXMessageHeader *reply);
 
 /**
  * Announce the stream to the server and set up the RIVERMAXStream child
@@ -594,25 +594,26 @@ int ff_rivermax_setup_output_streams(AVFormatContext *s, const char *addr);
  * Parse RIVERMAX commands (OPTIONS, PAUSE and TEARDOWN) during streaming in
  * listen mode.
  */
-int ff_rivermax_parse_streaming_commands(AVFormatContext *s);
+// FORWARD DECL
+int ff_rtsp_parse_streaming_commands(AVFormatContext *s);
 
 /**
  * Parse an SDP description of streams by populating an RIVERMAXState struct
  * within the AVFormatContext; also allocate the RTP streams and the
  * pollfd array used for UDP streams.
  */
-int ff_sdp_parse(AVFormatContext *s, const char *content);
+int ff_sdp_parse1(AVFormatContext *s, const char *content);
 
 /**
  * Receive one RTP packet from an TCP interleaved RIVERMAX stream.
  */
-int ff_rivermax_tcp_read_packet(AVFormatContext *s, RIVERMAXStream **privermax_st,
+int ff_rtsp_tcp_read_packet(AVFormatContext *s, RIVERMAXStream **privermax_st,
                             uint8_t *buf, int buf_size);
 
 /**
  * Send buffered packets over TCP.
  */
-int ff_rivermax_tcp_write_packet(AVFormatContext *s, RIVERMAXStream *rivermax_st);
+int ff_rtsp_tcp_write_packet(AVFormatContext *s, RIVERMAXStream *rivermax_st);
 
 /**
  * Receive one packet from the RIVERMAXStreams set up in the AVFormatContext
