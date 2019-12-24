@@ -222,6 +222,9 @@ const RTPDynamicProtocolHandler *ff_rtp_handler_find_by_id(int id,
 int ff_rtsp_next_attr_and_value(const char **p, char *attr, int attr_size,
                                 char *value, int value_size);
 
+int ff_rivermax_next_attr_and_value(const char **p, char *attr, int attr_size,
+                                char *value, int value_size);
+
 int ff_parse_fmtp(AVFormatContext *s,
                   AVStream *stream, PayloadContext *data, const char *p,
                   int (*parse_fmtp)(AVFormatContext *s,
